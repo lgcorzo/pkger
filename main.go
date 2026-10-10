@@ -23,7 +23,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -44,10 +43,9 @@ import (
 
 // nolint: gochecknoglobals
 var (
-	version        = "dev"
-	commitID       = ""
-	dirty          = false
-	releaseMatcher = regexp.MustCompile(`[0-9]`)
+	version  = "dev"
+	commitID = ""
+	dirty    = false
 
 	app     = kingpin.New("pkger", "Debian, RPMs and APKs for MinIO")
 	appName = app.Flag("appName", "Application name for the package: aistor, ac, sidekick, warp, memkv, aimem or minfs").
@@ -709,7 +707,9 @@ func main() {
 	}
 
 	outputPath := filepath.Join(releaseDirName(), outputFilename)
-	os.WriteFile(outputPath, buf, 0o644)
+	if err := os.WriteFile(outputPath, buf, 0o644); err != nil {
+		kingpin.Fatalf(err.Error())
+	}
 
 	fmt.Println("Generated downloads metadata at", outputPath)
 }
@@ -819,7 +819,7 @@ func semVerRelease(release string) string {
 }
 
 func parseDepsFile(path string) (map[string][]string, error) {
-	depsBytes, err := ioutil.ReadFile(path)
+	depsBytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
